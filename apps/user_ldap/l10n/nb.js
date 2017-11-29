@@ -99,6 +99,7 @@ OC.L10N.register(
     "The DN of the client user with which the bind shall be done, e.g. uid=agent,dc=example,dc=com. For anonymous access, leave DN and Password empty." : "DN for klientbrukeren som binding skal gjøres med, f.eks. uid=agent,dc=example,dc=com. For anonym tilgang, la DN og passord stå tomme.",
     "Password" : "Passord",
     "For anonymous access, leave DN and Password empty." : "For anonym tilgang, la DN- og passord-feltet stå tomt.",
+    "Save Credentials" : "Lagre påloggingsdetaljer",
     "One Base DN per line" : "En base-DN pr. linje",
     "You can specify Base DN for users and groups in the Advanced tab" : "Du kan spesifisere base-DN for brukere og grupper under 'Avansert'-fanen",
     "Detect Base DN" : "Påvis base-DN",
@@ -121,7 +122,6 @@ OC.L10N.register(
     "Wrong password. Reset it?" : "Feilpassord. Tilbakestill?",
     "Wrong password." : "Feil passord.",
     "Cancel" : "Avbryt",
-    "LDAP" : "LDAP",
     "Server" : "Tjener",
     "Users" : "Brukere",
     "Login Attributes" : "Påloggingsattributter",
@@ -191,6 +191,7 @@ OC.L10N.register(
     "Verify settings and count groups" : "Sjekk innstillinger og tell gruppene",
     "Add a new and blank configuration" : "Legg til et nytt tomt oppsett",
     "You can omit the protocol, except you require SSL. Then start with ldaps://" : "Du kan utelate protokollen, men du krever bruk av SSL.  Deretter start med ldaps://",
+    "LDAP" : "LDAP",
     "<b>Warning:</b> Apps user_ldap and user_webdavauth are incompatible. You may experience unexpected behavior. Please ask your system administrator to disable one of them." : "<b>Advarsel:</b> Programmene user_ldap og user_webdavauth er ikke kompatible med hverandre. Uventet oppførsel kan forekomme. Be systemadministratoren om å deaktivere én av dem.",
     "in bytes" : "i Byte"
 },

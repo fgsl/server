@@ -3,6 +3,7 @@ OC.L10N.register(
     {
     "Calendar" : "Naptár",
     "Todos" : "Teendők",
+    "Personal" : "Személyes",
     "{actor} created calendar {calendar}" : "{actor} létrehozta a naptárt: {calendar}",
     "You created calendar {calendar}" : "Létrehoztad a naptárt: {calendar}",
     "{actor} deleted calendar {calendar}" : "{actor} törölte a naptárt: {calendar}",
@@ -40,12 +41,23 @@ OC.L10N.register(
     "A calendar <strong>event</strong> was modified" : "Egy naptár <strong>esemény</strong> megváltozott",
     "A calendar <strong>todo</strong> was modified" : "Egy naptár <strong>teendő</strong> megváltozott",
     "Contact birthdays" : "Születésnapok",
-    "Personal" : "Személyes",
+    "%s via %s" : "%s - %s",
+    "Invitation canceled" : "Meghívás visszavonva",
+    "Hello %s," : "Üdv %s,",
+    "The meeting »%s« with %s was canceled." : "A »%s« találkozó vele: %s lemondásra került.",
+    "Invitation updated" : "Meghívó frissítve",
+    "The meeting »%s« with %s was updated." : "A »%s«  találkozó  vele: %s módosult.",
+    "%s invited you to »%s«" : "%s meghívott ide: »%s«",
+    "When:" : "Mikor:",
+    "Where:" : "Hol:",
+    "Description:" : "Leírás:",
+    "Link:" : "Link:",
     "Contacts" : "Névjegyek",
     "Technical details" : "Technikai adatok",
     "Remote Address: %s" : "Távoli cím: %s",
     "Request ID: %s" : "Kérelem azonosító: %s",
     "CalDAV server" : "CalDAV szerver",
-    "Send invitations to attendees" : "Meghívó küldése a résztvevőknek"
+    "Send invitations to attendees" : "Meghívó küldése a résztvevőknek",
+    "Please make sure to properly set up the email settings above." : "Győződj meg róla, hogy a fenti e-mail beállítások helyesek."
 },
 "nplurals=2; plural=(n != 1);");

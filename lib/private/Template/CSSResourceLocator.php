@@ -2,10 +2,15 @@
 /**
  * @copyright Copyright (c) 2016, ownCloud, Inc.
  *
+ * @author Axel Helmert <axel.helmert@luka.de>
  * @author Bart Visscher <bartv@thisnet.nl>
  * @author Joas Schilling <coding@schilljs.com>
+ * @author John Molakvoæ (skjnldsv) <skjnldsv@protonmail.com>
  * @author Morris Jobke <hey@morrisjobke.de>
+ * @author Robin Appelman <robin@icewind.nl>
+ * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
+ * @author tux-rampage <tux-rampage@users.noreply.github.com>
  *
  * @license AGPL-3.0
  *
@@ -70,6 +75,11 @@ class CSSResourceLocator extends ResourceLocator {
 			]);
 			return;
 		}
+
+		// Account for the possibility of having symlinks in app path. Doing
+		// this here instead of above as an empty argument to realpath gets
+		// turned into cwd.
+		$app_path = realpath($app_path);
 
 		if(!$this->cacheAndAppendScssIfExist($app_path, $style.'.scss', $app)) {
 			$this->append($app_path, $style.'.css', $app_url);

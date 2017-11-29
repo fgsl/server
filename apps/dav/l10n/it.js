@@ -3,6 +3,7 @@ OC.L10N.register(
     {
     "Calendar" : "Calendario",
     "Todos" : "Cose da fare",
+    "Personal" : "Personale",
     "{actor} created calendar {calendar}" : "{actor} ha creato il calendario {calendar}",
     "You created calendar {calendar}" : "Hai creato il calendario {calendar}",
     "{actor} deleted calendar {calendar}" : "{actor} ha eliminato il calendario {calendar}",
@@ -40,12 +41,23 @@ OC.L10N.register(
     "A calendar <strong>event</strong> was modified" : "Un <strong>evento</strong> del calendario è stato modificato",
     "A calendar <strong>todo</strong> was modified" : "Una <strong>cosa da fare</strong> del calendario è stata modificata",
     "Contact birthdays" : "Date di nascita dei contatti",
-    "Personal" : "Personale",
+    "%s via %s" : "%s tramite %s",
+    "Invitation canceled" : "Invito annullato",
+    "Hello %s," : "Ciao %s,",
+    "The meeting »%s« with %s was canceled." : "L'incontro «%s» con %s è stato annullato.",
+    "Invitation updated" : "Invito aggiornato",
+    "The meeting »%s« with %s was updated." : "L'incontro «%s» con %s è stato aggiornato.",
+    "%s invited you to »%s«" : "%s ti ha invitato a «%s»",
+    "When:" : "Quando:",
+    "Where:" : "Dove:",
+    "Description:" : "Descrizione:",
+    "Link:" : "Collegamento:",
     "Contacts" : "Contatti",
     "Technical details" : "Dettagli tecnici",
     "Remote Address: %s" : "Indirizzo remoto: %s",
     "Request ID: %s" : "ID richiesta: %s",
     "CalDAV server" : "Server CalDAV",
-    "Send invitations to attendees" : "Invia gli inviti ai partecipanti"
+    "Send invitations to attendees" : "Invia gli inviti ai partecipanti",
+    "Please make sure to properly set up the email settings above." : "Assicurati di configurare correttamente le impostazioni di posta sopra."
 },
 "nplurals=2; plural=(n != 1);");

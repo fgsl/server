@@ -10,6 +10,8 @@
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Robin McCorkell <robin@mccorkell.me.uk>
+ * @author Roeland Jago Douma <roeland@famdouma.nl>
+ * @author Roger Szabo <roger.szabo@web.de>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  *
  * @license AGPL-3.0
@@ -80,7 +82,7 @@ abstract class Proxy {
 			new Manager($ocConfig, $fs, $log, $avatarM, new \OCP\Image(), $db,
 				$coreUserManager, $coreNotificationManager);
 		$connector = new Connection($this->ldap, $configPrefix);
-		$access = new Access($connector, $this->ldap, $userManager, new Helper(\OC::$server->getConfig()));
+		$access = new Access($connector, $this->ldap, $userManager, new Helper($ocConfig), $ocConfig);
 		$access->setUserMapper($userMap);
 		$access->setGroupMapper($groupMap);
 		self::$accesses[$configPrefix] = $access;

@@ -22,30 +22,6 @@
 	-ms-user-select: none;
 }
 
-/* Header menu */
-.menu {
-	position: absolute;
-	top: 45px;
-	background-color: $color-main-background;
-	box-shadow: 0 1px 10px $color-box-shadow;
-	border-radius: 0 0 3px 3px;
-	display: none;
-	box-sizing: border-box;
-	z-index: 2000;
-
-	/* Dropdown arrow */
-	&:after {
-		border: 10px solid transparent;
-		border-bottom-color: $color-main-background;
-		bottom: 100%;
-		content: ' ';
-		height: 0;
-		width: 0;
-		position: absolute;
-		pointer-events: none;
-	}
-}
-
 /* removed until content-focusing issue is fixed */
 #skip-to-content a {
 	position: absolute;
@@ -96,6 +72,29 @@
 }
 
 #header {
+	/* Header menu */
+	.menu {
+		top: 45px;
+		background-color: $color-main-background;
+		filter: drop-shadow(0 1px 3px $color-box-shadow);
+		border-radius: 0 0 3px 3px;
+		display: none;
+		box-sizing: border-box;
+		z-index: 2000;
+		position: absolute;
+
+		/* Dropdown arrow */
+		&:after {
+			border: 10px solid transparent;
+			border-bottom-color: $color-main-background;
+			bottom: 100%;
+			content: ' ';
+			height: 0;
+			width: 0;
+			position: absolute;
+			pointer-events: none;
+		}
+	}
 	.logo {
 		display: inline-flex;
 		background-image: url($image-logo);
@@ -143,6 +142,7 @@
 	#header-left, .header-left {
 		flex: 0 0;
 		flex-grow: 1;
+		white-space: nowrap;
 	}
 
 	#header-right, .header-right {
@@ -203,13 +203,14 @@ nav {
 	margin-left: -54px;
 }
 
-#navigation,
-.ui-datepicker {
+.header-left #navigation,
+.ui-datepicker,
+.ui-timepicker.ui-widget {
 	position: relative;
 	left: -100%;
 	width: 160px;
 	background-color: $color-main-background;
-	box-shadow: 0 1px 10px $color-box-shadow;
+	filter: drop-shadow(0 1px 3px $color-box-shadow);
 	&:after {
 		/* position of dropdown arrow */
 		left: 47%;
@@ -221,7 +222,7 @@ nav {
 		position: absolute;
 		pointer-events: none;
 		border-color: rgba(0, 0, 0, 0);
-		border-bottom-color: rgba(255, 255, 255, .97);
+		border-bottom-color: $color-main-background;
 		border-width: 9px;
 		margin-left: -9px;
 	}
@@ -315,6 +316,10 @@ nav {
 	overflow: auto;
 	.in-header {
 		display: none;
+	}
+	ul {
+		display: flex;
+		flex-direction: column;
 	}
 }
 
@@ -424,6 +429,7 @@ nav {
 		&:active,
 		&.active {
 			opacity: 1;
+			box-shadow: inset 2px 0 $color-primary;
 		}
 	}
 }
@@ -455,6 +461,8 @@ nav {
 	}
 	.app-loading .icon-loading-small-dark {
 		top:12px;
+		width: 20px;
+		height: 20px;
 	}
 
 
@@ -478,7 +486,7 @@ nav {
 		background-color: rgba($color-main-background, .97);
 		white-space: nowrap;
 		border: none;
-		border-radius: 3px;
+		border-radius: $border-radius;
 		border-top-left-radius: 0;
 		border-top-right-radius: 0;
 		margin-top: 0;

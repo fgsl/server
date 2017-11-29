@@ -2,8 +2,14 @@
 /**
  * @copyright Copyright (c) 2016 Lukas Reschke <lukas@statuscode.ch>
  *
+ * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
+ * @author Bjoern Schiessle <bjoern@schiessle.org>
+ * @author Jan-Christoph Borchardt <hey@jancborchardt.net>
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Julius Haertl <jus@bitgrid.net>
+ * @author Julius Härtl <jus@bitgrid.net>
  * @author Lukas Reschke <lukas@statuscode.ch>
+ * @author Morris Jobke <hey@morrisjobke.de>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -217,7 +223,7 @@ class ThemingDefaultsTest extends TestCase {
 				['theming', 'slogan', $this->defaults->getSlogan(), 'Slogan'],
 			]);
 
-		$this->assertEquals('<a href="url" target="_blank" rel="noreferrer">Name</a> – Slogan', $this->template->getShortFooter());
+		$this->assertEquals('<a href="url" target="_blank" rel="noreferrer noopener">Name</a> – Slogan', $this->template->getShortFooter());
 	}
 
 	public function testGetShortFooterEmptySlogan() {
@@ -230,7 +236,7 @@ class ThemingDefaultsTest extends TestCase {
 				['theming', 'slogan', $this->defaults->getSlogan(), ''],
 			]);
 
-		$this->assertEquals('<a href="url" target="_blank" rel="noreferrer">Name</a>', $this->template->getShortFooter());
+		$this->assertEquals('<a href="url" target="_blank" rel="noreferrer noopener">Name</a>', $this->template->getShortFooter());
 	}
 
 	public function testgetColorPrimaryWithDefault() {

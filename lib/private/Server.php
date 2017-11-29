@@ -9,20 +9,25 @@
  * @author Bernhard Reiter <ockham@raz.or.at>
  * @author Bjoern Schiessle <bjoern@schiessle.org>
  * @author Björn Schießle <bjoern@schiessle.org>
- * @author Christopher Schäpers <kondou@ts.unde.re>
  * @author Christoph Wurst <christoph@owncloud.com>
+ * @author Christopher Schäpers <kondou@ts.unde.re>
+ * @author Damjan Georgievski <gdamjan@gmail.com>
  * @author Joas Schilling <coding@schilljs.com>
+ * @author John Molakvoæ (skjnldsv) <skjnldsv@protonmail.com>
+ * @author Julius Haertl <jus@bitgrid.net>
+ * @author Julius Härtl <jus@bitgrid.net>
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
  * @author Lukas Reschke <lukas@statuscode.ch>
  * @author Morris Jobke <hey@morrisjobke.de>
+ * @author Piotr Mrówczyński <mrow4a@yahoo.com>
  * @author Robin Appelman <robin@icewind.nl>
  * @author Robin McCorkell <robin@mccorkell.me.uk>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
+ * @author root <root@localhost.localdomain>
  * @author Sander <brantje@gmail.com>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Thomas Tanghus <thomas@tanghus.net>
  * @author Vincent Petry <pvince81@owncloud.com>
- * @author Roger Szabo <roger.szabo@web.de>
  *
  * @license AGPL-3.0
  *
@@ -106,6 +111,7 @@ use OCA\Theming\ThemingDefaults;
 
 use OCP\App\IAppManager;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\Collaboration\AutoComplete\IManager;
 use OCP\Defaults;
 use OCA\Theming\Util;
 use OCP\Federation\ICloudIdManager;
@@ -146,6 +152,9 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerService(\OCP\IServerContainer::class, function (IServerContainer $c) {
 			return $c;
 		});
+
+		$this->registerAlias(\OCP\Calendar\IManager::class, \OC\Calendar\Manager::class);
+		$this->registerAlias('CalendarManager', \OC\Calendar\Manager::class);
 
 		$this->registerAlias(\OCP\Contacts\IManager::class, \OC\ContactsManager::class);
 		$this->registerAlias('ContactsManager', \OCP\Contacts\IManager::class);
@@ -510,12 +519,16 @@ class Server extends ServerContainer implements IServerContainer {
 		});
 		$this->registerAlias('AvatarManager', \OCP\IAvatarManager::class);
 
+		$this->registerAlias(\OCP\Support\CrashReport\IRegistry::class, \OC\Support\CrashReport\Registry::class);
+
 		$this->registerService(\OCP\ILogger::class, function (Server $c) {
 			$logType = $c->query('AllConfig')->getSystemValue('log_type', 'file');
 			$logger = Log::getLogClass($logType);
 			call_user_func(array($logger, 'init'));
+			$config = $this->getSystemConfig();
+			$registry = $c->query(\OCP\Support\CrashReport\IRegistry::class);
 
-			return new Log($logger);
+			return new Log($logger, $config, null, $registry);
 		});
 		$this->registerAlias('Logger', \OCP\ILogger::class);
 
@@ -532,8 +545,8 @@ class Server extends ServerContainer implements IServerContainer {
 		$this->registerService(\OCP\Route\IRouter::class, function (Server $c) {
 			$cacheFactory = $c->getMemCacheFactory();
 			$logger = $c->getLogger();
-			if ($cacheFactory->isAvailable()) {
-				$router = new \OC\Route\CachingRouter($cacheFactory->create('route'), $logger);
+			if ($cacheFactory->isAvailableLowLatency()) {
+				$router = new \OC\Route\CachingRouter($cacheFactory->createLocal('route'), $logger);
 			} else {
 				$router = new \OC\Route\Router($logger);
 			}
@@ -1011,6 +1024,8 @@ class Server extends ServerContainer implements IServerContainer {
 		});
 		$this->registerAlias('CollaboratorSearch', \OCP\Collaboration\Collaborators\ISearch::class);
 
+		$this->registerAlias(\OCP\Collaboration\AutoComplete\IManager::class, \OC\Collaboration\AutoComplete\Manager::class);
+
 		$this->registerService('SettingsManager', function (Server $c) {
 			$manager = new \OC\Settings\Manager(
 				$c->getLogger(),
@@ -1084,6 +1099,23 @@ class Server extends ServerContainer implements IServerContainer {
 				$c->query(\OCP\Share\IManager::class)
 			);
 		});
+
+		$this->registerService(Installer::class, function(Server $c) {
+			return new Installer(
+				$c->getAppFetcher(),
+				$c->getHTTPClientService(),
+				$c->getTempManager(),
+				$c->getLogger(),
+				$c->getConfig()
+			);
+		});
+	}
+
+	/**
+	 * @return \OCP\Calendar\IManager
+	 */
+	public function getCalendarManager() {
+		return $this->query('CalendarManager');
 	}
 
 	/**
@@ -1799,6 +1831,13 @@ class Server extends ServerContainer implements IServerContainer {
 	 */
 	public function getCollaboratorSearch() {
 		return $this->query('CollaboratorSearch');
+	}
+
+	/**
+	 * @return \OCP\Collaboration\AutoComplete\IManager
+	 */
+	public function getAutoCompleteManager(){
+		return $this->query(IManager::class);
 	}
 
 	/**

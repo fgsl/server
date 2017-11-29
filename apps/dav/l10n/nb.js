@@ -3,6 +3,7 @@ OC.L10N.register(
     {
     "Calendar" : "Kalender",
     "Todos" : "Gjøremål",
+    "Personal" : "Personlig",
     "{actor} created calendar {calendar}" : "{actor} opprettet kalenderen {calendar}",
     "You created calendar {calendar}" : "Du opprettet kalenderen {calendar}",
     "{actor} deleted calendar {calendar}" : "{actor} slettet kalenderen {calendar}",
@@ -40,12 +41,23 @@ OC.L10N.register(
     "A calendar <strong>event</strong> was modified" : "En kalender <strong>hendelse</strong> ble endret",
     "A calendar <strong>todo</strong> was modified" : "En kalende <strong>gjøremål</strong> ble endret",
     "Contact birthdays" : "Kontakters fødelsdag",
-    "Personal" : "Personlig",
+    "%s via %s" : "%s via %s",
+    "Invitation canceled" : "Invitasjon tilbakekalt",
+    "Hello %s," : "Hei %s,",
+    "The meeting »%s« with %s was canceled." : "Møtet \"%s\" med %s ble kansellert.",
+    "Invitation updated" : "Invitasjon oppdatert",
+    "The meeting »%s« with %s was updated." : "Møtet med \"%s\" med %s ble oppdatert.",
+    "%s invited you to »%s«" : "%s inviterte deg til \"%s\"",
+    "When:" : "Når:",
+    "Where:" : "Hvor:",
+    "Description:" : "Beskrivelse:",
+    "Link:" : "Lenke:",
     "Contacts" : "Kontakter",
     "Technical details" : "Tekniske detaljer",
     "Remote Address: %s" : "Ekstern adresse: %s",
     "Request ID: %s" : "Forespørsel ID: %s",
     "CalDAV server" : "DalDAV-tjener",
-    "Send invitations to attendees" : "Send invitasjoner til oppmøtte"
+    "Send invitations to attendees" : "Send invitasjoner til oppmøtte",
+    "Please make sure to properly set up the email settings above." : "Sett opp e-postinnstillingene ovenfor på riktig måte."
 },
 "nplurals=2; plural=(n != 1);");

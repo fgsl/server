@@ -61,7 +61,7 @@
 }
 
 /* Css replaced elements don't have ::after nor ::before */
-img, object, video, button, textarea, input, select {
+img, object, video, button, textarea, input, select, div[contenteditable=true] {
 	.icon-loading {
 		background-image: url('../img/loading.gif');
 	}
@@ -89,9 +89,17 @@ img, object, video, button, textarea, input, select {
 	background-size: 32px !important;
 }
 
+.icon-shadow {
+	filter: drop-shadow(0 1px 3px $color-box-shadow);
+}
+
 /* ICONS -------------------------------------------------------------------- */
 .icon-add {
 	background-image: url('../img/actions/add.svg?v=1');
+}
+
+.icon-address {
+	background-image: url('../img/actions/address.svg?v=1');
 }
 
 .icon-audio {
@@ -258,20 +266,12 @@ img, object, video, button, textarea, input, select {
 	background-image: url('../img/actions/pause.svg?v=1');
 }
 
-.icon-pause-big {
-	background-image: url('../img/actions/pause-big.svg?v=1');
-}
-
 .icon-play {
 	background-image: url('../img/actions/play.svg?v=1');
 }
 
 .icon-play-add {
 	background-image: url('../img/actions/play-add.svg?v=1');
-}
-
-.icon-play-big {
-	background-image: url('../img/actions/play-big.svg?v=1');
 }
 
 .icon-play-next {
@@ -346,6 +346,10 @@ img, object, video, button, textarea, input, select {
 
 .icon-star {
 	background-image: url('../img/actions/star.svg?v=1');
+}
+
+.icon-star-dark {
+	background-image: url('../img/actions/star-dark.svg?v=1');
 }
 
 .icon-starred {
@@ -548,4 +552,12 @@ img, object, video, button, textarea, input, select {
 
 .icon-category-tools {
 	background-image: url('../img/actions/settings-dark.svg?v=1');
+}
+
+.icon-category-games {
+	background-image: url('../img/categories/games.svg?v=1');
+}
+
+.icon-category-security {
+	background-image: url('../img/actions/password.svg?v=1');
 }

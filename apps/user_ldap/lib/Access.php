@@ -8,8 +8,10 @@
  * @author Arthur Schiwon <blizzz@arthur-schiwon.de>
  * @author Bart Visscher <bartv@thisnet.nl>
  * @author Benjamin Diele <benjamin@diele.be>
+ * @author bline <scottbeck@gmail.com>
  * @author Christopher Schäpers <kondou@ts.unde.re>
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Juan Pablo Villafáñez <jvillafanez@solidgear.es>
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
  * @author Lorenzo M. Catucci <lorenzo@sancho.ccd.uniroma2.it>
  * @author Lukas Reschke <lukas@statuscode.ch>
@@ -18,9 +20,10 @@
  * @author Morris Jobke <hey@morrisjobke.de>
  * @author Nicolas Grekas <nicolas.grekas@gmail.com>
  * @author Ralph Krimmel <rkrimme1@gwdg.de>
- * @author Renaud Fortier <Renaud.Fortier@fsaa.ulaval.ca>
  * @author Robin McCorkell <robin@mccorkell.me.uk>
  * @author Roger Szabo <roger.szabo@web.de>
+ * @author root <root@localhost.localdomain>
+ * @author Victor Dubiniuk <dubiniuk@owncloud.com>
  *
  * @license AGPL-3.0
  *
@@ -48,15 +51,16 @@ use OCA\User_LDAP\User\OfflineUser;
 use OCA\User_LDAP\Mapping\AbstractMapping;
 
 use OC\ServerNotAvailableException;
+use OCP\IConfig;
 
 /**
  * Class Access
  * @package OCA\User_LDAP
  */
 class Access extends LDAPUtility implements IUserTools {
-	/**
-	 * @var \OCA\User_LDAP\Connection
-	 */
+	const UUID_ATTRIBUTES = ['entryuuid', 'nsuniqueid', 'objectguid', 'guid', 'ipauniqueid'];
+
+	/** @var \OCA\User_LDAP\Connection */
 	public $connection;
 	/** @var Manager */
 	public $userManager;
@@ -83,19 +87,27 @@ class Access extends LDAPUtility implements IUserTools {
 	* @var AbstractMapping $userMapper
 	*/
 	protected $groupMapper;
-	
+
 	/**
 	 * @var \OCA\User_LDAP\Helper
 	 */
 	private $helper;
+	/** @var IConfig */
+	private $config;
 
-	public function __construct(Connection $connection, ILDAPWrapper $ldap,
-		Manager $userManager, Helper $helper) {
+	public function __construct(
+		Connection $connection,
+		ILDAPWrapper $ldap,
+		Manager $userManager,
+		Helper $helper,
+		IConfig $config
+	) {
 		parent::__construct($ldap);
 		$this->connection = $connection;
 		$this->userManager = $userManager;
 		$this->userManager->setLdapAccess($this);
 		$this->helper = $helper;
+		$this->config = $config;
 	}
 
 	/**
@@ -508,12 +520,16 @@ class Access extends LDAPUtility implements IUserTools {
 
 	/**
 	 * returns an internal Nextcloud name for the given LDAP DN, false on DN outside of search DN
-	 * @param string $dn the dn of the user object
-	 * @param string $ldapName optional, the display name of the object
+	 *
+	 * @param string $fdn the dn of the user object
+	 * @param string|null $ldapName optional, the display name of the object
 	 * @param bool $isUser optional, whether it is a user object (otherwise group assumed)
-	 * @return string|false with with the name to use in Nextcloud
+	 * @param bool|null $newlyMapped
+	 * @param array|null $record
+	 * @return false|string with with the name to use in Nextcloud
 	 */
-	public function dn2ocname($fdn, $ldapName = null, $isUser = true) {
+	public function dn2ocname($fdn, $ldapName = null, $isUser = true, &$newlyMapped = null, array $record = null) {
+		$newlyMapped = false;
 		if($isUser) {
 			$mapper = $this->getUserMapper();
 			$nameAttribute = $this->connection->ldapUserDisplayName;
@@ -523,18 +539,18 @@ class Access extends LDAPUtility implements IUserTools {
 		}
 
 		//let's try to retrieve the Nextcloud name from the mappings table
-		$ocName = $mapper->getNameByDN($fdn);
-		if(is_string($ocName)) {
-			return $ocName;
+		$ncName = $mapper->getNameByDN($fdn);
+		if(is_string($ncName)) {
+			return $ncName;
 		}
 
 		//second try: get the UUID and check if it is known. Then, update the DN and return the name.
-		$uuid = $this->getUUID($fdn, $isUser);
+		$uuid = $this->getUUID($fdn, $isUser, $record);
 		if(is_string($uuid)) {
-			$ocName = $mapper->getNameByUUID($uuid);
-			if(is_string($ocName)) {
+			$ncName = $mapper->getNameByUUID($uuid);
+			if(is_string($ncName)) {
 				$mapper->setDNbyUUID($fdn, $uuid);
-				return $ocName;
+				return $ncName;
 			}
 		} else {
 			//If the UUID can't be detected something is foul.
@@ -574,6 +590,7 @@ class Access extends LDAPUtility implements IUserTools {
 			|| (!$isUser && !\OC::$server->getGroupManager()->groupExists($intName))) {
 			if($mapper->map($fdn, $intName, $uuid)) {
 				$this->connection->setConfiguration(array('ldapCacheTTL' => $originalTTL));
+				$newlyMapped = true;
 				return $intName;
 			}
 		}
@@ -581,6 +598,7 @@ class Access extends LDAPUtility implements IUserTools {
 
 		$altName = $this->createAltInternalOwnCloudName($intName, $isUser);
 		if(is_string($altName) && $mapper->map($fdn, $altName, $uuid)) {
+			$newlyMapped = true;
 			return $altName;
 		}
 
@@ -786,7 +804,7 @@ class Access extends LDAPUtility implements IUserTools {
 	 * utilizing the login filter.
 	 *
 	 * @param string $loginName
-	 * @return array
+	 * @return int
 	 */
 	public function countUsersByLoginName($loginName) {
 		$loginName = $this->escapeFilterPart($loginName);
@@ -800,11 +818,22 @@ class Access extends LDAPUtility implements IUserTools {
 	 * @param string|string[] $attr
 	 * @param int $limit
 	 * @param int $offset
+	 * @param bool $forceApplyAttributes
 	 * @return array
 	 */
-	public function fetchListOfUsers($filter, $attr, $limit = null, $offset = null) {
+	public function fetchListOfUsers($filter, $attr, $limit = null, $offset = null, $forceApplyAttributes = false) {
 		$ldapRecords = $this->searchUsers($filter, $attr, $limit, $offset);
-		$this->batchApplyUserAttributes($ldapRecords);
+		$recordsToUpdate = $ldapRecords;
+		if(!$forceApplyAttributes) {
+			$isBackgroundJobModeAjax = $this->config
+					->getAppValue('core', 'backgroundjobs_mode', 'ajax') === 'ajax';
+			$recordsToUpdate = array_filter($ldapRecords, function($record) use ($isBackgroundJobModeAjax) {
+				$newlyMapped = false;
+				$uid = $this->dn2ocname($record['dn'][0], null, true, $newlyMapped, $record);
+				return ($uid !== false) && ($newlyMapped || $isBackgroundJobModeAjax);
+			});
+		}
+		$this->batchApplyUserAttributes($recordsToUpdate);
 		return $this->fetchList($ldapRecords, (count($attr) > 1));
 	}
 
@@ -821,7 +850,7 @@ class Access extends LDAPUtility implements IUserTools {
 				// displayName is obligatory
 				continue;
 			}
-			$ocName  = $this->dn2ocname($userRecord['dn'][0]);
+			$ocName  = $this->dn2ocname($userRecord['dn'][0], null, true);
 			if($ocName === false) {
 				continue;
 			}
@@ -1218,7 +1247,9 @@ class Access extends LDAPUtility implements IUserTools {
 						if($key !== 'dn') {
 							$selection[$i][$key] = $this->resemblesDN($key) ?
 								$this->helper->sanitizeDN($item[$key])
-								: $item[$key];
+								: $key === 'objectguid' || $key === 'guid' ?
+									$selection[$i][$key] = $this->convertObjectGUID2Str($item[$key])
+									: $item[$key];
 						} else {
 							$selection[$i][$key] = [$this->helper->sanitizeDN($item[$key])];
 						}
@@ -1510,12 +1541,14 @@ class Access extends LDAPUtility implements IUserTools {
 
 	/**
 	 * auto-detects the directory's UUID attribute
+	 *
 	 * @param string $dn a known DN used to check against
 	 * @param bool $isUser
 	 * @param bool $force the detection should be run, even if it is not set to auto
+	 * @param array|null $ldapRecord
 	 * @return bool true on success, false otherwise
 	 */
-	private function detectUuidAttribute($dn, $isUser = true, $force = false) {
+	private function detectUuidAttribute($dn, $isUser = true, $force = false, array $ldapRecord = null) {
 		if($isUser) {
 			$uuidAttr     = 'ldapUuidUserAttribute';
 			$uuidOverride = $this->connection->ldapExpertUUIDUserAttr;
@@ -1533,10 +1566,17 @@ class Access extends LDAPUtility implements IUserTools {
 			return true;
 		}
 
-		// for now, supported attributes are entryUUID, nsuniqueid, objectGUID, ipaUniqueID
-		$testAttributes = array('entryuuid', 'nsuniqueid', 'objectguid', 'guid', 'ipauniqueid');
+		foreach(self::UUID_ATTRIBUTES as $attribute) {
+			if($ldapRecord !== null) {
+				// we have the info from LDAP already, we don't need to talk to the server again
+				if(isset($ldapRecord[$attribute])) {
+					$this->connection->$uuidAttr = $attribute;
+					return true;
+				} else {
+					continue;
+				}
+			}
 
-		foreach($testAttributes as $attribute) {
 			$value = $this->readAttribute($dn, $attribute);
 			if(is_array($value) && isset($value[0]) && !empty($value[0])) {
 				\OCP\Util::writeLog('user_ldap',
@@ -1556,9 +1596,10 @@ class Access extends LDAPUtility implements IUserTools {
 	/**
 	 * @param string $dn
 	 * @param bool $isUser
-	 * @return string|bool
+	 * @param null $ldapRecord
+	 * @return bool|string
 	 */
-	public function getUUID($dn, $isUser = true) {
+	public function getUUID($dn, $isUser = true, $ldapRecord = null) {
 		if($isUser) {
 			$uuidAttr     = 'ldapUuidUserAttribute';
 			$uuidOverride = $this->connection->ldapExpertUUIDUserAttr;
@@ -1568,13 +1609,16 @@ class Access extends LDAPUtility implements IUserTools {
 		}
 
 		$uuid = false;
-		if($this->detectUuidAttribute($dn, $isUser)) {
-			$uuid = $this->readAttribute($dn, $this->connection->$uuidAttr);
+		if($this->detectUuidAttribute($dn, $isUser, false, $ldapRecord)) {
+			$attr = $this->connection->$uuidAttr;
+			$uuid = isset($ldapRecord[$attr]) ? $ldapRecord[$attr] : $this->readAttribute($dn, $attr);
 			if( !is_array($uuid)
 				&& $uuidOverride !== ''
-				&& $this->detectUuidAttribute($dn, $isUser, true)) {
-					$uuid = $this->readAttribute($dn,
-												 $this->connection->$uuidAttr);
+				&& $this->detectUuidAttribute($dn, $isUser, true, $ldapRecord))
+			{
+				$uuid = isset($ldapRecord[$this->connection->$uuidAttr])
+					? $ldapRecord[$this->connection->$uuidAttr]
+					: $this->readAttribute($dn, $this->connection->$uuidAttr);
 			}
 			if(is_array($uuid) && isset($uuid[0]) && !empty($uuid[0])) {
 				$uuid = $uuid[0];
@@ -1853,20 +1897,19 @@ class Access extends LDAPUtility implements IUserTools {
 
 				$cookie = $this->getPagedResultCookie($base, $filter, $limit, $offset);
 				if(empty($cookie) && $cookie !== "0" && ($offset > 0)) {
-					// no cookie known, although the offset is not 0. Maybe cache run out. We need
-					// to start all over *sigh* (btw, Dear Reader, did you know LDAP paged
-					// searching was designed by MSFT?)
-					// 		Lukas: No, but thanks to reading that source I finally know!
-					// '0' is valid, because 389ds
-					$reOffset = ($offset - $limit) < 0 ? 0 : $offset - $limit;
-					//a bit recursive, $offset of 0 is the exit
-					\OCP\Util::writeLog('user_ldap', 'Looking for cookie L/O '.$limit.'/'.$reOffset, \OCP\Util::INFO);
-					$this->search($filter, array($base), $attr, $limit, $reOffset, true);
+					// no cookie known from a potential previous search. We need
+					// to start from 0 to come to the desired page. cookie value
+					// of '0' is valid, because 389ds
+					$reOffset = 0;
+					while($reOffset < $offset) {
+						$this->search($filter, array($base), $attr, $limit, $reOffset, true);
+						$reOffset += $limit;
+					}
 					$cookie = $this->getPagedResultCookie($base, $filter, $limit, $offset);
 					//still no cookie? obviously, the server does not like us. Let's skip paging efforts.
+					// '0' is valid, because 389ds
 					//TODO: remember this, probably does not change in the next request...
 					if(empty($cookie) && $cookie !== '0') {
-						// '0' is valid, because 389ds
 						$cookie = null;
 					}
 				}

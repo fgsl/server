@@ -12,10 +12,11 @@
  * @author Christopher Schäpers <kondou@ts.unde.re>
  * @author Felix Moeller <mail@felixmoeller.de>
  * @author Frank Karlitschek <frank@karlitschek.de>
- * @author Georg Ehrke <georg@owncloud.com>
+ * @author Georg Ehrke <oc.list@georgehrke.com>
  * @author Jakob Sack <mail@jakobsack.de>
- * @author Jan-Christoph Borchardt <hey@jancborchardt.net>
  * @author Joas Schilling <coding@schilljs.com>
+ * @author Julius Haertl <jus@bitgrid.net>
+ * @author Julius Härtl <jus@bitgrid.net>
  * @author Jörn Friedrich Dreyer <jfd@butonic.de>
  * @author Kamil Domanski <kdomanski@kdemail.net>
  * @author Klaas Freitag <freitag@owncloud.com>
@@ -27,6 +28,7 @@
  * @author Robin McCorkell <robin@mccorkell.me.uk>
  * @author Roeland Jago Douma <roeland@famdouma.nl>
  * @author Sam Tuke <mail@samtuke.com>
+ * @author Sebastian Wessalowski <sebastian@wessalowski.org>
  * @author Thomas Müller <thomas.mueller@tmit.eu>
  * @author Thomas Tanghus <thomas@tanghus.net>
  * @author Tom Needham <tom@owncloud.com>
@@ -185,6 +187,8 @@ class OC_App {
 						'class' => $plugin['@value'],
 					];
 					\OC::$server->getCollaboratorSearch()->registerPlugin($pluginInfo);
+				} else if ($plugin['@attributes']['type'] === 'autocomplete-sort') {
+					\OC::$server->getAutoCompleteManager()->registerSorter($plugin['@value']);
 				}
 			}
 		}
@@ -348,6 +352,7 @@ class OC_App {
 	 *
 	 * @param string $app app
 	 * @return bool
+	 * @deprecated 13.0.0 use \OC::$server->getAppManager()->isEnabledForUser($appId)
 	 *
 	 * This function checks whether or not an app is enabled.
 	 */
@@ -370,13 +375,7 @@ class OC_App {
 		self::$enabledAppsCache = []; // flush
 
 		// Check if app is already downloaded
-		$installer = new Installer(
-			\OC::$server->getAppFetcher(),
-			\OC::$server->getHTTPClientService(),
-			\OC::$server->getTempManager(),
-			\OC::$server->getLogger(),
-			\OC::$server->getConfig()
-		);
+		$installer = \OC::$server->query(Installer::class);
 		$isDownloaded = $installer->isDownloaded($appId);
 
 		if(!$isDownloaded) {
@@ -410,13 +409,7 @@ class OC_App {
 			return false;
 		}
 
-		$installer = new Installer(
-			\OC::$server->getAppFetcher(),
-			\OC::$server->getHTTPClientService(),
-			\OC::$server->getTempManager(),
-			\OC::$server->getLogger(),
-			\OC::$server->getConfig()
-		);
+		$installer = \OC::$server->query(Installer::class);
 		return $installer->removeApp($app);
 	}
 
@@ -865,21 +858,6 @@ class OC_App {
 		}
 
 		return $appList;
-	}
-
-	/**
-	 * Returns the internal app ID or false
-	 * @param string $ocsID
-	 * @return string|false
-	 */
-	public static function getInternalAppIdByOcs($ocsID) {
-		if(is_numeric($ocsID)) {
-			$idArray = \OC::$server->getAppConfig()->getValues(false, 'ocsid');
-			if(array_search($ocsID, $idArray)) {
-				return array_search($ocsID, $idArray);
-			}
-		}
-		return false;
 	}
 
 	public static function shouldUpgrade($app) {

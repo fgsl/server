@@ -3,6 +3,7 @@ OC.L10N.register(
     {
     "Calendar" : "Kalender",
     "Todos" : "Aufgaben",
+    "Personal" : "Persönlich",
     "{actor} created calendar {calendar}" : "{actor} hat den Kalender {calendar} erstellt",
     "You created calendar {calendar}" : "Sie haben den Kalender {calendar} erstellt",
     "{actor} deleted calendar {calendar}" : "{actor} hat den Kalender {calendar} gelöscht",
@@ -40,12 +41,23 @@ OC.L10N.register(
     "A calendar <strong>event</strong> was modified" : "Ein Kalender-<strong>Ereignis</strong> wurde bearbeitet",
     "A calendar <strong>todo</strong> was modified" : "Eine Kalender-<strong>Aufgabe</strong> wurde bearbeitet",
     "Contact birthdays" : "Geburtstage von Kontakten",
-    "Personal" : "Persönlich",
+    "%s via %s" : "%s über %s",
+    "Invitation canceled" : "Einladung abgebrochen",
+    "Hello %s," : "Hallo %s,",
+    "The meeting »%s« with %s was canceled." : "Der Termin »%s« mit %s wurde abgesagt.",
+    "Invitation updated" : "Einladung aktualisiert",
+    "The meeting »%s« with %s was updated." : "Der Termin »%s« mit %s wurde aktualisiert.",
+    "%s invited you to »%s«" : "%s hat Sie zu »%s« eingeladen",
+    "When:" : "Wann:",
+    "Where:" : "Wo:",
+    "Description:" : "Beschreibung:",
+    "Link:" : "Link:",
     "Contacts" : "Kontakte",
     "Technical details" : "Technische Details",
     "Remote Address: %s" : "Entfernte Adresse: %s",
     "Request ID: %s" : "Anfragekennung: %s",
     "CalDAV server" : "CalDAV-Server",
-    "Send invitations to attendees" : "Einladungen an die Teilnehmer versenden"
+    "Send invitations to attendees" : "Einladungen an die Teilnehmer versenden",
+    "Please make sure to properly set up the email settings above." : "Stellen Sie sicher, dass die obigen E-Mail-Einstellungen korrekt sind."
 },
 "nplurals=2; plural=(n != 1);");

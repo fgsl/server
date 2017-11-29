@@ -99,6 +99,7 @@ OC.L10N.register(
     "The DN of the client user with which the bind shall be done, e.g. uid=agent,dc=example,dc=com. For anonymous access, leave DN and Password empty." : "De DN van de client gebruiker waarmee de verbinding zal worden gemaakt, bijv. uid=agent,dc=example,dc=com. Voor anonieme toegang laat je het DN en het wachtwoord leeg.",
     "Password" : "Wachtwoord",
     "For anonymous access, leave DN and Password empty." : "Voor anonieme toegang, laat de DN en het wachtwoord leeg.",
+    "Save Credentials" : "Opslaan inloggegevens",
     "One Base DN per line" : "Een Base DN per regel",
     "You can specify Base DN for users and groups in the Advanced tab" : "Je kunt het Base DN voor gebruikers en groepen specificeren in het tab Geavanceerd.",
     "Detect Base DN" : "Detecteren basis DN",
@@ -121,7 +122,6 @@ OC.L10N.register(
     "Wrong password. Reset it?" : "Onjuist wachtwoord. Resetten?",
     "Wrong password." : "Onjuist wachtwoord.",
     "Cancel" : "Annuleren",
-    "LDAP" : "LDAP",
     "Server" : "Server",
     "Users" : "Gebruikers",
     "Login Attributes" : "Inlogattributen",
@@ -191,6 +191,7 @@ OC.L10N.register(
     "Verify settings and count groups" : "Verifiëren instellingen en tel groepen",
     "Add a new and blank configuration" : "Toevoegen nieuwe, blanco configuratie",
     "You can omit the protocol, except you require SSL. Then start with ldaps://" : "Je kunt het protocol weglaten, tenzij je SSL vereist. Start in dat geval met ldaps://",
+    "LDAP" : "LDAP",
     "<b>Warning:</b> Apps user_ldap and user_webdavauth are incompatible. You may experience unexpected behavior. Please ask your system administrator to disable one of them." : "<b>Waarschuwing:</b> De Apps user_ldap en user_webdavauth zijn incompatible. Je kunt onverwacht gedrag ervaren. Vraag je beheerder om een van beide apps de deactiveren.",
     "in bytes" : "in bytes"
 },
