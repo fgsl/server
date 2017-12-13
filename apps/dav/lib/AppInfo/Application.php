@@ -76,6 +76,16 @@ class Application extends App {
 	}
 
 	/**
+	 * @param IManager $contactsManager
+	 */
+	public function setupSystemContactsProvider(IContactsManager $contactsManager) {
+		/** @var ContactsManager $cm */
+		$cm = $this->getContainer()->query(ContactsManager::class);
+		$urlGenerator = $this->getContainer()->getServer()->getURLGenerator();
+		$cm->setupSystemContactsProvider($contactsManager, $urlGenerator);
+	}
+
+	/**
 	 * @param ICalendarManager $calendarManager
 	 * @param string $userId
 	 */
@@ -175,6 +185,15 @@ class Application extends App {
 				$event->getArgument('shares'),
 				$event->getArgument('add'),
 				$event->getArgument('remove')
+			);
+		});
+
+		$dispatcher->addListener('\OCA\DAV\CalDAV\CalDavBackend::publishCalendar', function(GenericEvent $event) {
+			/** @var Backend $backend */
+			$backend = $this->getContainer()->query(Backend::class);
+			$backend->onCalendarPublication(
+				$event->getArgument('calendarData'),
+				$event->getArgument('public')
 			);
 		});
 

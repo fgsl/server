@@ -379,7 +379,23 @@ class OC_Util {
 	 */
 	public static function copySkeleton($userId, \OCP\Files\Folder $userDirectory) {
 
-		$skeletonDirectory = \OC::$server->getConfig()->getSystemValue('skeletondirectory', \OC::$SERVERROOT . '/core/skeleton');
+		$plainSkeletonDirectory = \OC::$server->getConfig()->getSystemValue('skeletondirectory', \OC::$SERVERROOT . '/core/skeleton');
+		$userLang = \OC::$server->getL10NFactory()->findLanguage();
+		$skeletonDirectory = str_replace('{lang}', $userLang, $plainSkeletonDirectory);
+
+		if (!file_exists($skeletonDirectory)) {
+			$dialectStart = strpos($userLang, '_');
+			if ($dialectStart !== false) {
+				$skeletonDirectory = str_replace('{lang}', substr($userLang, 0, $dialectStart), $plainSkeletonDirectory);
+			}
+			if ($dialectStart === false || !file_exists($skeletonDirectory)) {
+				$skeletonDirectory = str_replace('{lang}', 'default', $plainSkeletonDirectory);
+			}
+			if (!file_exists($skeletonDirectory)) {
+				$skeletonDirectory = '';
+			}
+		}
+
 		$instanceId = \OC::$server->getConfig()->getSystemValue('instanceid', '');
 
 		if ($instanceId === null) {
@@ -979,8 +995,11 @@ class OC_Util {
 	 * @return array arrays with error messages and hints
 	 */
 	public static function checkDataDirectoryPermissions($dataDirectory) {
+		if(\OC::$server->getConfig()->getSystemValue('check_data_directory_permissions', true) === false) {
+			return  [];
+		}
 		$l = \OC::$server->getL10N('lib');
-		$errors = array();
+		$errors = [];
 		$permissionsModHint = $l->t('Please change the permissions to 0770 so that the directory'
 			. ' cannot be listed by other users.');
 		$perms = substr(decoct(@fileperms($dataDirectory)), -3);

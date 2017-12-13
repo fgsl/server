@@ -32,22 +32,26 @@ use OCA\DAV\CardDAV\CardDavBackend;
 use OCA\DAV\Connector\Sabre\Principal;
 use OCA\DAV\DAV\GroupPrincipalBackend;
 use OCA\DAV\DAV\SystemPrincipalBackend;
-use Sabre\CalDAV\Principal\Collection;
+use OCA\DAV\CalDAV\Principal\Collection;
 use Sabre\DAV\SimpleCollection;
 
 class RootCollection extends SimpleCollection {
 
 	public function __construct() {
 		$config = \OC::$server->getConfig();
+		$l10n = \OC::$server->getL10N('dav');
 		$random = \OC::$server->getSecureRandom();
 		$logger = \OC::$server->getLogger();
 		$userManager = \OC::$server->getUserManager();
 		$groupManager = \OC::$server->getGroupManager();
+		$shareManager = \OC::$server->getShareManager();
 		$db = \OC::$server->getDatabaseConnection();
 		$dispatcher = \OC::$server->getEventDispatcher();
 		$userPrincipalBackend = new Principal(
 			$userManager,
-			$groupManager
+			$groupManager,
+			$shareManager,
+			\OC::$server->getUserSession()
 		);
 		$groupPrincipalBackend = new GroupPrincipalBackend($groupManager);
 		// as soon as debug mode is enabled we allow listing of principals
@@ -65,7 +69,7 @@ class RootCollection extends SimpleCollection {
 		$caldavBackend = new CalDavBackend($db, $userPrincipalBackend, $userManager, $groupManager, $random, $logger, $dispatcher);
 		$calendarRoot = new CalendarRoot($userPrincipalBackend, $caldavBackend, 'principals/users');
 		$calendarRoot->disableListing = $disableListing;
-		$publicCalendarRoot = new PublicCalendarRoot($caldavBackend);
+		$publicCalendarRoot = new PublicCalendarRoot($caldavBackend, $l10n, $config);
 		$publicCalendarRoot->disableListing = $disableListing;
 
 		$systemTagCollection = new SystemTag\SystemTagsByIdCollection(

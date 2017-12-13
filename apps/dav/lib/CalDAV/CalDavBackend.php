@@ -353,7 +353,7 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 				'{' . Plugin::NS_CALENDARSERVER . '}getctag' => 'http://sabre.io/ns/sync/' . ($row['synctoken']?$row['synctoken']:'0'),
 				'{http://sabredav.org/ns}sync-token' => $row['synctoken']?$row['synctoken']:'0',
 				'{' . Plugin::NS_CALDAV . '}supported-calendar-component-set' => new SupportedCalendarComponentSet($components),
-				'{' . Plugin::NS_CALDAV . '}schedule-calendar-transp' => new ScheduleCalendarTransp($row['transparent']?'transparent':'opaque'),
+				'{' . Plugin::NS_CALDAV . '}schedule-calendar-transp' => new ScheduleCalendarTransp('transparent'),
 				'{' . \OCA\DAV\DAV\Sharing\Plugin::NS_OWNCLOUD . '}owner-principal' => $this->convertPrincipal($row['principaluri'], !$this->legacyEndpoint),
 				$readOnlyPropertyName => $readOnly,
 			];
@@ -2151,6 +2151,16 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 	 * @return string|null
 	 */
 	public function setPublishStatus($value, $calendar) {
+
+		$calendarId = $calendar->getResourceId();
+		$this->dispatcher->dispatch('\OCA\DAV\CalDAV\CalDavBackend::publishCalendar', new GenericEvent(
+			'\OCA\DAV\CalDAV\CalDavBackend::updateShares',
+			[
+				'calendarId' => $calendarId,
+				'calendarData' => $this->getCalendarById($calendarId),
+				'public' => $value,
+			]));
+
 		$query = $this->db->getQueryBuilder();
 		if ($value) {
 			$publicUri = $this->random->generate(16, ISecureRandom::CHAR_HUMAN_READABLE);
@@ -2271,6 +2281,22 @@ class CalDavBackend extends AbstractBackend implements SyncSupport, Subscription
 					}
 				}
 			}
+		}
+	}
+
+	/**
+	 * deletes all birthday calendars
+	 */
+	public function deleteAllBirthdayCalendars() {
+		$query = $this->db->getQueryBuilder();
+		$result = $query->select(['id'])->from('calendars')
+			->where($query->expr()->eq('uri',
+				$query->createNamedParameter(BirthdayService::BIRTHDAY_CALENDAR_URI)))
+			->execute();
+
+		$ids = $result->fetchAll();
+		foreach($ids as $id) {
+			$this->deleteCalendar($id['id']);
 		}
 	}
 

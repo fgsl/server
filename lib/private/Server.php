@@ -63,6 +63,7 @@ use OC\Collaboration\Collaborators\RemotePlugin;
 use OC\Collaboration\Collaborators\UserPlugin;
 use OC\Command\CronBus;
 use OC\Contacts\ContactsMenu\ActionFactory;
+use OC\Contacts\ContactsMenu\ContactsStore;
 use OC\Diagnostics\EventLogger;
 use OC\Diagnostics\QueryLogger;
 use OC\Federation\CloudIdManager;
@@ -89,6 +90,8 @@ use OC\Memcache\ArrayCache;
 use OC\Memcache\Factory;
 use OC\Notification\Manager;
 use OC\OCS\DiscoveryService;
+use OC\Remote\Api\ApiFactory;
+use OC\Remote\InstanceFactory;
 use OC\Repair\NC11\CleanPreviewsBackgroundJob;
 use OC\RichObjectStrings\Validator;
 use OC\Security\Bruteforce\Throttler;
@@ -112,23 +115,29 @@ use OCA\Theming\ThemingDefaults;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Collaboration\AutoComplete\IManager;
+use OCP\Contacts\ContactsMenu\IContactsStore;
 use OCP\Defaults;
 use OCA\Theming\Util;
 use OCP\Federation\ICloudIdManager;
 use OCP\Authentication\LoginCredentials\IStore;
+use OCP\Files\NotFoundException;
 use OCP\ICacheFactory;
 use OCP\IDBConnection;
 use OCP\IL10N;
 use OCP\IServerContainer;
 use OCP\ITempManager;
 use OCP\Contacts\ContactsMenu\IActionFactory;
+use OCP\IUser;
 use OCP\Lock\ILockingProvider;
+use OCP\Remote\Api\IApiFactory;
+use OCP\Remote\IInstanceFactory;
 use OCP\RichObjectStrings\IValidator;
 use OCP\Security\IContentSecurityPolicyManager;
 use OCP\Share;
 use OCP\Share\IShareHelper;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
  * Class Server
@@ -344,6 +353,8 @@ class Server extends ServerContainer implements IServerContainer {
 				$defaultTokenProvider = null;
 			}
 
+			$dispatcher = $c->getEventDispatcher();
+
 			$userSession = new \OC\User\Session($manager, $session, $timeFactory, $defaultTokenProvider, $c->getConfig(), $c->getSecureRandom(), $c->getLockdownManager());
 			$userSession->listen('\OC\User', 'preCreateUser', function ($uid, $password) {
 				\OC_Hook::emit('OC_User', 'pre_createUser', array('run' => true, 'uid' => $uid, 'password' => $password));
@@ -352,9 +363,10 @@ class Server extends ServerContainer implements IServerContainer {
 				/** @var $user \OC\User\User */
 				\OC_Hook::emit('OC_User', 'post_createUser', array('uid' => $user->getUID(), 'password' => $password));
 			});
-			$userSession->listen('\OC\User', 'preDelete', function ($user) {
+			$userSession->listen('\OC\User', 'preDelete', function ($user) use ($dispatcher) {
 				/** @var $user \OC\User\User */
 				\OC_Hook::emit('OC_User', 'pre_deleteUser', array('run' => true, 'uid' => $user->getUID()));
+				$dispatcher->dispatch('OCP\IUser::preDelete', new GenericEvent($user));
 			});
 			$userSession->listen('\OC\User', 'postDelete', function ($user) {
 				/** @var $user \OC\User\User */
@@ -885,7 +897,21 @@ class Server extends ServerContainer implements IServerContainer {
 			$factoryClass = $config->getSystemValue('comments.managerFactory', '\OC\Comments\ManagerFactory');
 			/** @var \OCP\Comments\ICommentsManagerFactory $factory */
 			$factory = new $factoryClass($this);
-			return $factory->getManager();
+			$manager = $factory->getManager();
+
+			$manager->registerDisplayNameResolver('user', function($id) use ($c) {
+				$manager = $c->getUserManager();
+				$user = $manager->get($id);
+				if(is_null($user)) {
+					$l = $c->getL10N('core');
+					$displayName = $l->t('Unknown user');
+				} else {
+					$displayName = $user->getDisplayName();
+				}
+				return $displayName;
+			});
+
+			return $manager;
 		});
 		$this->registerAlias('CommentsManager', \OCP\Comments\ICommentsManager::class);
 
@@ -1109,6 +1135,27 @@ class Server extends ServerContainer implements IServerContainer {
 				$c->getConfig()
 			);
 		});
+
+		$this->registerService(IApiFactory::class, function(Server $c) {
+			return new ApiFactory($c->getHTTPClientService());
+		});
+
+		$this->registerService(IInstanceFactory::class, function(Server $c) {
+			$memcacheFactory = $c->getMemCacheFactory();
+			return new InstanceFactory($memcacheFactory->createLocal('remoteinstance.'), $c->getHTTPClientService());
+		});
+
+		$this->registerService(IContactsStore::class, function(Server $c) {
+			return new ContactsStore(
+				$c->getContactsManager(),
+				$c->getConfig(),
+				$c->getUserManager(),
+				$c->getGroupManager()
+			);
+		});
+		$this->registerAlias(IContactsStore::class, ContactsStore::class);
+
+		$this->connectDispatcher();
 	}
 
 	/**
@@ -1116,6 +1163,28 @@ class Server extends ServerContainer implements IServerContainer {
 	 */
 	public function getCalendarManager() {
 		return $this->query('CalendarManager');
+	}
+
+	private function connectDispatcher() {
+		$dispatcher = $this->getEventDispatcher();
+
+		// Delete avatar on user deletion
+		$dispatcher->addListener('OCP\IUser::preDelete', function(GenericEvent $e) {
+			$logger = $this->getLogger();
+			$manager = $this->getAvatarManager();
+			/** @var IUser $user */
+			$user = $e->getSubject();
+
+			try {
+				$avatar = $manager->getAvatar($user->getUID());
+				$avatar->remove();
+			} catch (NotFoundException $e) {
+				// no avatar to remove
+			} catch (\Exception $e) {
+				// Ignore exceptions
+				$logger->info('Could not cleanup avatar of ' . $user->getUID());
+			}
+		});
 	}
 
 	/**
@@ -1877,5 +1946,19 @@ class Server extends ServerContainer implements IServerContainer {
 	 */
 	public function getCloudIdManager() {
 		return $this->query(ICloudIdManager::class);
+	}
+
+	/**
+	 * @return \OCP\Remote\Api\IApiFactory
+	 */
+	public function getRemoteApiFactory() {
+		return $this->query(IApiFactory::class);
+	}
+
+	/**
+	 * @return \OCP\Remote\IInstanceFactory
+	 */
+	public function getRemoteInstanceFactory() {
+		return $this->query(IInstanceFactory::class);
 	}
 }

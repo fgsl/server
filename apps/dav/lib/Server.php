@@ -33,6 +33,7 @@
 namespace OCA\DAV;
 
 use OC\AppFramework\Utility\TimeFactory;
+use OCA\DAV\CalDAV\BirthdayService;
 use OCA\DAV\CalDAV\Schedule\IMipPlugin;
 use OCA\DAV\CardDAV\ImageExportPlugin;
 use OCA\DAV\CardDAV\PhotoCache;
@@ -77,11 +78,8 @@ class Server {
 		$this->request = $request;
 		$this->baseUri = $baseUri;
 		$logger = \OC::$server->getLogger();
-		$mailer = \OC::$server->getMailer();
 		$dispatcher = \OC::$server->getEventDispatcher();
-		$timezone = new TimeFactory();
 		$sendInvitations = \OC::$server->getConfig()->getAppValue('dav', 'sendInvitations', 'yes') === 'yes';
-		$l10nFactory = \OC::$server->getL10NFactory();
 
 		$root = new RootCollection();
 		$this->server = new \OCA\DAV\Connector\Sabre\Server(new CachingTree($root));
@@ -259,6 +257,10 @@ class Server {
 						$view
 					)));
 				}
+				$this->server->addPlugin(new \OCA\DAV\CalDAV\BirthdayCalendar\EnablePlugin(
+					\OC::$server->getConfig(),
+					\OC::$server->query(BirthdayService::class)
+				));
 			}
 
 			// register plugins from apps
